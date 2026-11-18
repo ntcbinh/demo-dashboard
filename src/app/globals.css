@@ -1,26 +1,186 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens.
+ *
+ * Colours are defined here and nowhere else. The charts reference them as
+ * `var(--chart-*)` from SVG attributes, so there is no second copy of the
+ * palette in TypeScript to drift out of sync.
+ *
+ * The accent is indigo on a cool slate neutral. It was chosen by measurement,
+ * not taste: the accent has to stay clearly distinct from the four reserved
+ * status colours, because in a monitoring UI an accent that reads as "alarm"
+ * or "healthy" is a usability defect. Indigo measures ΔE 26.9 from status
+ * critical and sits far from status good. Amber and aqua were tested and
+ * rejected — ΔE 8.1 from critical and 10.0 from good respectively, both below
+ * the floor at which full-colour vision can separate them.
+ *
+ * Status roles are fixed and never themed. On the light surface the warning
+ * step is below 3:1 by design, so every status is rendered with an icon *and*
+ * a text label — state never depends on colour alone.
+ *
+ * Ink contrast (WCAG, against the least forgiving surface of each mode):
+ *   light  primary 16.5 · secondary 6.7 · muted 4.6 · accent 7.6
+ *   dark   primary 14.9 · secondary 9.1 · muted 4.8 · accent 5.2
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  color-scheme: light;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --surface-0: #f4f6f9;
+  --surface-1: #ffffff;
+  --surface-2: #eef1f6;
+  --surface-raised: #ffffff;
+  --border-subtle: #e2e7ef;
+  --border-strong: #cdd5e1;
+
+  --text-primary: #0d1220;
+  --text-secondary: #475569;
+  --text-muted: #5f6d82;
+
+  --accent: #4a3aa7;
+  --accent-hover: #3b2e86;
+  --accent-contrast: #ffffff;
+  --accent-wash: #ece9f9;
+  --accent-ring: #4a3aa755;
+
+  --chart-series-1: #4a3aa7;
+  --chart-grid: #e2e7ef;
+
+  /* Reserved status roles. */
+  --chart-good: #0ca30c;
+  --chart-warning: #fab219;
+  --chart-critical: #d03b3b;
+  --chart-stale: #8a94a6;
+
+  --shadow-panel: 0 1px 2px rgb(13 18 32 / 0.04), 0 1px 1px rgb(13 18 32 / 0.03);
+  --shadow-raised: 0 4px 12px rgb(13 18 32 / 0.08);
+
+  --background: var(--surface-0);
+  --foreground: var(--text-primary);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    color-scheme: dark;
+
+    --surface-0: #0b0e14;
+    --surface-1: #11151d;
+    --surface-2: #19202b;
+    --surface-raised: #19202b;
+    --border-subtle: #222b38;
+    --border-strong: #2f3a4a;
+
+    --text-primary: #f1f5f9;
+    --text-secondary: #b6c2d2;
+    --text-muted: #7d8da3;
+
+    /* Stepped for the dark surface, not an automatic inversion. */
+    --accent: #9085e9;
+    --accent-hover: #a79ef0;
+    --accent-contrast: #11151d;
+    --accent-wash: #1d1b33;
+    --accent-ring: #9085e966;
+
+    --chart-series-1: #9085e9;
+    --chart-grid: #222b38;
+
+    --chart-good: #0ca30c;
+    --chart-warning: #fab219;
+    --chart-critical: #d03b3b;
+    --chart-stale: #7d8da3;
+
+    --shadow-panel: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-raised: 0 6px 20px rgb(0 0 0 / 0.45);
   }
+}
+
+@theme inline {
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-raised: var(--surface-raised);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-accent-wash: var(--accent-wash);
+
+  --color-series-1: var(--chart-series-1);
+  --color-good: var(--chart-good);
+  --color-warning: var(--chart-warning);
+  --color-critical: var(--chart-critical);
+  --color-stale: var(--chart-stale);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --shadow-panel: var(--shadow-panel);
+  --shadow-raised: var(--shadow-raised);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/*
+ * Every measured quantity is set in the mono face with tabular figures.
+ *
+ * This is the one typographic decision that matters in an instrumentation UI:
+ * proportional digits change width as values stream in, so a column of live
+ * numbers visibly shivers even when the values barely move. Mono + `tnum`
+ * pins each digit to the same advance, and it also makes readings scan as
+ * measurements rather than as prose.
+ */
+.tabular {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  letter-spacing: -0.01em;
+}
+
+/* Keyboard focus is accent-coloured and always visible; pointer focus is not. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* The virtualised table scrolls constantly; a thin scrollbar keeps it quiet. */
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+.thin-scrollbar::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--border-strong);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

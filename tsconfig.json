@@ -5,6 +5,9 @@
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
+    // The standalone simulator in `server/` runs on `node server/ws-server.ts`
+    // (Node 24 type stripping), which requires explicit `.ts` import extensions.
+    "allowImportingTsExtensions": true,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
